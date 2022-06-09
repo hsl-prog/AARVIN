@@ -1,0 +1,36 @@
+
+AARVIN - AUTONOMOUS ARDUINO-DRIVEN RESEARCH VEHICLE IN NATURE
+CREATED BY HAYLEY LEAVITT 
+COPYRIGHT 2021
+
+
+AARVIN is a personal project I began concepting in the summer of 2021. 
+
+Originally, I intended for AARVIN to be a waterborn vehicle, but due to the limitations of my experience with robotics and 
+the hour-long drive to a body of water greater than 10m across, I decided to change directions. I spent the best part of a 
+year becoming more familiar with the concepts behind autonomous robotics, navigation theory, and the techonolgy of Arduinos 
+and Raspberry Pis before ever beginning the mechanical or software development of AARVIN. 
+
+Finally, I had come up with an achievable goal. While the autonomous-research-boat concept was inspiring, it was difficult 
+to determine what exactly I was setting out to achieve. What would be AARVIN's purpose? To collect general weather data? 
+To search for trash? To locate sunken vessels? All of these concepts are achievable on a grand scale, but within the confines 
+of a university student's free time and budget, the pursuit of these goals became much more difficult. So, what would be more 
+attainable? 
+
+My father, a software engineer at Lockheed Martin, half-jokingly threw out the idea of building a little car that drove around 
+and took pictures, much like the Google Streetcar, and from there I was hooked. This was an achievable goal, with a reasonable
+purpose that helped define all of the design, style, and development questions that I was getting stuck on. From there, I was
+able to quickly sit down and determine exactly what I wanted and needed out of my hardware. 
+
+I decided upon a tank-style vehicle, due to its robust ability to traverse unstable outdoor terrain, and its availability as 
+a robotics kit on Amazon. I had specs that I required, but since I did not have access to a laser cutter or a 3D printer, my
+options for chasses were limited. If I'd had more time and access to 3d printers and laser cutters, I certainly would have 
+gone the route of designing AARVIN from scratch, but I was able to find a suitable kit on Amazon including a Raspberry Pi: 
+https://www.amazon.com/gp/product/B09V7TKJLD/ref=ox_sc_act_title_4?smid=A1N1A77RUX51FT&psc=1
+
+In addition to the Raspberry Pi, I had an Arduino Mega and several other components like ultrasonic sensors, gps modules, etc.
+So far, the hardest part of working on AARVIN was deciding what AARVIN was going to be. 
+
+The assembly of AARVIN will commence upon arrival of the kit in early July. 
+
+
