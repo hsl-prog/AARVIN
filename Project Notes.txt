@@ -7,8 +7,7 @@ COPYRIGHT 2021
 AARVIN is a personal project I began concepting in the summer of 2021. 
 
 Originally, I intended for AARVIN to be a waterborn vehicle, but due to the limitations of my experience with robotics and 
-the hour-long drive to a body of water greater than 10m across, I decided to change directions. I spent the best part of a 
-year becoming more familiar with the concepts behind autonomous robotics, navigation theory, and the techonolgy of Arduinos 
+the hour-long drive to the nearest lake, I decided to change directions. I spent the better part of a year becoming more familiar with the concepts behind autonomous robotics, navigation theory, and the techonolgy of Arduinos 
 and Raspberry Pis before ever beginning the mechanical or software development of AARVIN. 
 
 Finally, I had come up with an achievable goal. While the autonomous-research-boat concept was inspiring, it was difficult 
