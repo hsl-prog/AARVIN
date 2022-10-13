@@ -1,0 +1,69 @@
+
+AUTONOMOUS ARDUINO-DRIVEN RESEARCH VEHICLE IN NATURE (AARVIN)
+AUTHOR: HAYLEY SPENCER LEAVITT 
+
+GITHUB: https://github.com/hsl-prog/AARVIN
+JIRA: https://hayleyleavitt.atlassian.net/jira/software/projects/AARVIN/boards
+
+
+2022/06/07 :  
+AARVIN is a personal project I began concepting in the summer of 2021. My primary goal with AARVIN is to learn. I am 
+excited by the embedded programming of autonomous vehicles, medical technology, and so many other gadgets. So, what 
+better way to learn than to dive right in?
+
+Originally, I intended for AARVIN to be a waterborn vehicle, but due to the limitations of my experience with robotics and 
+the hour-long drive to the nearest lake, I decided to change directions. I spent the better part of a year becoming more 
+familiar with the concepts behind autonomous robotics, navigation theory, and the techonolgy of Arduino and Raspberry Pi 
+before ever beginning the mechanical or software development of AARVIN. 
+
+Finally, I had come up with an achievable goal. While the concept of an autonomous research boat was inspiring, it was 
+difficult to determine what I was setting out to achieve with it. What would be AARVIN's purpose? To collect general 
+weather data? To search for trash? To locate sunken vessels? All of these concepts are achievable on a grand scale, but 
+within the confines of a college student's time and budget, the pursuit of these goals became much more difficult. So, 
+what would be more attainable? 
+
+My father, a software engineer at Lockheed Martin, half-jokingly threw out the idea of building a little car that drove 
+around and took pictures, much like the Google Street Car, and from there I was hooked. This was an achievable goal, with
+a reasonable purpose that helped define all of the design, style, and development questions that I was getting stuck on. 
+From there, I was able to quickly sit down and determine exactly what I wanted and needed out of my hardware. 
+
+I decided te use a tank treaded vehicle due to its robust ability to traverse unstable outdoor terrain, and its availability 
+as a robotics kit on Amazon. I had specs that I required, but since I did not have access to a laser cutter or a 3D printer, 
+my options for chasses were limited. If I'd had more time and access to 3d printers and laser cutters, I certainly would have 
+gone the route of designing AARVIN from scratch, but I was able to find a suitable kit on Amazon including a Raspberry Pi: 
+https://www.amazon.com/gp/product/B09V7TKJLD/ref=ox_sc_act_title_4?smid=A1N1A77RUX51FT&psc=1
+
+In addition to the Raspberry Pi, I have an Arduino Mega and several other components like ultrasonic sensors, gps modules, 
+etc. So far, the hardest part of working on AARVIN was deciding what AARVIN was going to be. 
+
+The assembly of AARVIN will commence upon arrival of the kit in early July. 
+
+
+2022/10/12 : 
+I've made some wonderful advancements with AARVIN! I was able to get the project approved for credit with my university, so 
+the bulk of development will be undertaken during this Fall semester of CS469 - Project Management in Computer Science with 
+Professor Eric Vogel. 
+
+For materials I have obtained the Sphero RVR, the Advanced Autonomous Kit for Sphero RVR by Sparkfun, an Arduino Due, a 
+cheap children's camera, some opto-isolators, and various jumper wires. I'm currently looking into obtaining a better GPS
+module, since the one I have at the moment is only accurate to about a 10 foot radius, which is not ideal for the type of 
+task I'm aiming to accomplish with my navigation. I'm hoping to have the robot, when complete, take a tour around the road I
+live on, since it is a loop in a neighborhood, and take pictures at each house on the loop. Houses are approximately 50 feet 
+apart, so a 20 foot diameter of accuracy is good enough, but I'd preferably like to get that to a 6 foot diameter, especially 
+if indoor use is desired as well. Currently that's not part of my goal, but it would be a bonus to be able to map out a floor 
+of a house, similar to the 3d tours on Zillow. 
+
+Of course, AARVIN is just collecting the photos, but I have thought about continuing the project by creating a software that
+would piece together the photos into that 3D map. But probably not. That would be nice for the project, but it is not 
+something that I would be interested in learning to do, since I'm more interested in math, physics and lower level programming.
+
+With the start of the semester I am setting up my project plans. Professor Vogel has us using progressive decomposition to create
+our task list and then we're using breadth-first continuous integration for implementation. To help with my planning and 
+organization, I am making use of Jira and using agile sprints to more helpfully manage my tasks. My goal is to have the hardware 
+fully assembled by the end of next week, but debugging and improvements will continue throughout the semester. 
+
+All said and done, AARVIN will be functional by the end of the semester, which is early December. Likely, given the complexity 
+of the project, I will continue development beyond the semester. But, it is will be a major accomplishment to have AARVIN working
+before I graduate, and I am so excited to learn so much. 
+
+
