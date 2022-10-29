@@ -67,3 +67,23 @@ of the project, I will continue development beyond the semester. But, it is will
 before I graduate, and I am so excited to learn so much. 
 
 
+2022/10/28: 
+A lot has changed since the last update. It's been 16 days, and I've made good progress! I've ordered parts, broken a
+camera, soldered header pins on my own for the first time, and more. It took a decent bit of research to get the RVR working 
+with Arduino. It turns out that the RVR's SDK is only compatible with the ATP283Mega control chip Arduinos, which means that my 
+Due was not compatible. And I didn't feel that a Nano would have enough power, so that left me with an Uno! I ordered one, and 
+luckily it is compatible with all of the sensors in my kit. 
+
+The next issue was a confusing and tough one. I programmed my Uno with Blink and downloaded the SDK, but plugging it into the RVR
+resulted in nothing happening. Blink worked, but there was no movement, and I had little idea why. Further research shows that it 
+was reflection error. The cord was very long and with reflections corrupting the data, by the time information reached the RVR it 
+was all fried. Going from a 6-foot cord to a 6-inch cord fixed the issue though!
+
+The camera I tried to solder some jumper wires to the camera button circuitry, but unfortunately my flux fried some other buttons 
+on the camera that were necessary, so that $10 toddler camera is not currently viable. I've ordered an Arducam camera module, but 
+I'm not certain that Arduino will have the power to save photos as expected. 
+
+I've begun coding, and for this semester I am prioritizing the autonav features, which includes GPS functionality and obstacle 
+detection and avoidance. I'm also looking into adding "whisker" sensors, since I worry about how well the distance sensors are 
+going to work at close distances, so some wire and some limit switches will make for a nice bumber sensor. 
+
