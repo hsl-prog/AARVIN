@@ -9,6 +9,7 @@
  * 
  * https://www.arduino.cc/reference/en/
  * https://github.com/sphero-inc/sphero-sdk-arduino-cpp
+ * https://github.com/sparkfun/SparkFun_I2C_Mux_Arduino_Library
  * 
  */
 
@@ -16,25 +17,38 @@
 
 #include <SpheroRVR.h>                          // Library for the Sphero RVR
 #include <SPI.h>                                // SPI bus library
-#include <SD.h>                                 // Library for use of SD card
 #include <Wire.h>                               // Library for I2C/TWI devices
+
+#include <SparkFun_I2C_Mux_Arduino_Library.h>   // Library for I2C Qwiix Mux ??
+
 #include <SparkFun_I2C_GPS_Arduino_Library.h>   // Library for GPS XA1110
+#include <SparkFun_VL53L1X.h>                   // Library for distance sensor
 
 
 // ----------------------------------- Macros ------------------------------------
 
-#define SPEEDMULTIPLIER 1  // 1 = 100%, which is full speed 
-#define SECOND 1000        // 1000 = 1 second
+#define SPEEDMULTIPLIER 1      // 1 = 100%, which is full speed 
+#define SECOND 1000            // 1000 = 1 second
+#define NUMBER_OF_SENSORS 4    // how many sensors are we putting on the mux
+
+#define MUX_GPS     0x70       // define address for mux port 0, GPS
+#define MUX_FRONT   0x71       // define address for mux port 1, front dist.
+#define MUX_COMPASS 0x72       // define address for mux port 2, compass
+#define MUX_BACK    0x74       // define address for mux port 4, back dist. 
 
 
 // ------------------------------ Global Variables -------------------------------
 
 static DriveControl driveControl;  // Drive control for the RVR
 const int chipSelect = 4;          // chip pin for the SD card
-static I2CGPS myI2CGPS;            //Hook GPS to the library
+I2CGPS myI2CGPS;                   // Hook GPS object to the library
 
 
 // ---------------------------------- Functions ----------------------------------
+
+
+
+
 
 // the setup function runs once when you press reset or power the board
 void setup() 
@@ -48,30 +62,36 @@ void setup()
   // get the RVR's DriveControl
   driveControl = rvr.getDriveControl();
 
-  // Mux break out: 
-  //    - Arduino is connected to main
-  //    - GPS is on port 0 (address 0x70)
-  //    - Front distance sensor is on port 1 (address 0x71)
-  //    - Back distance sensor is on port 4 (address 0x74)
-  //    - Compass sensor *will* go on port 3 (address 0x73)
-  //    - Front limit switch sensor *will* go on port 2 (address 0x72)
-  //    - Back limit switch sensor *will* go on port 5 (address 0x75)
-  //    - port 6 (address 0x76), port 7 (address 0x77), and port 8 (address 0x78) remain
-
-  // set GPS update rate to 10Hz
-
-  // set the SD Serial port
+  /* 
+   *  Initialize all sensors connected to the TCA9548A 8-channel Mux board
+   *  
+   * The Mux board has two "main" ports, and 8 ports that sensors can use.
+   * The ports, numbered 0-7, have Serial addressed of 0x70 through 0x77.
+   * The Arduino Uno is connected to the main port on the left side of the bot.
+   * 
+   * The GPS XA1110 module is connected on port 0, address 0x70.  
+   * The front distance sensor, which is a VL53L1X module, is connected on port 
+   * 1, with address 0x71. 
+   * The compass module, which is a MMC5983MA micro magnetometer sensor, is 
+   * connected on port 2, with address 0x72. 
+   * The back distance sensor, which is also a VL53L1X module, is connected on 
+   * port 5, with address 0x75. 
+   * 
+  */
   Serial.begin(9600);
-}
+  Serial.println("Qwiic Mux Shield Read Example");
 
+  Wire.begin();
 
-/*
- * verify_sensors()
- * 
- * 
- */
-void verify_sensors()
-{
+  //Initialize all the sensors
+  for (byte x = 0 ; x < NUMBER_OF_SENSORS ; x++)
+  {
+    enableMuxPort(x);   //Tell mux to connect to port X
+    //Initialize the sensor connected to this port
+    disableMuxPort(x);
+  }
+
+  Serial.println("Mux Shield online");
 }
 
 
@@ -95,26 +115,6 @@ void okay_blink()
     delay(0.5 * SECOND);                       // wait for 1/2 of a second
   }
 }
-
-
-/* 
- *  get_gps_location()  
- *  
- *  Finds the current location of AARVIN using the Sparkfun XA1110 module. 
- */
-void get_gps_location()
-{
-}
-
-
-/*
- * take_picture()
- * 
- * Captures an image with the camera and saves it to the micro sd card
- */
- void take_picture()
- {
- }
 
 
 /* 
@@ -180,21 +180,12 @@ void waypoint_procedure()
  */
 void navigate()
 {
-
 }
 
 
 // avoid_obstacle() function: keeps us from running into things
 void avoid_obstacle()
-{
-  
-}
-
-
-// shut_down function: disconnects, cleans up and closes out
-void shut_down()
-{
-  
+{ 
 }
 
 
@@ -203,6 +194,15 @@ void shut_down()
 // loop() is the main function and it runs repeatedly
 void loop()
 {
+  for (byte x = 0 ; x < NUMBER_OF_SENSORS ; x++)
+  {
+    enableMuxPort(x); //Tell mux to connect to this port, and this port only
+
+    // connect to the sensor and take a reading
+
+    disableMuxPort(x); //Tell mux to disconnect from this port
+  }
+  
   // show that all systems are working
   okay_blink();          
 
