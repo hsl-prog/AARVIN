@@ -87,3 +87,32 @@ I've begun coding, and for this semester I am prioritizing the autonav features,
 detection and avoidance. I'm also looking into adding "whisker" sensors, since I worry about how well the distance sensors are 
 going to work at close distances, so some wire and some limit switches will make for a nice bumber sensor. 
 
+
+2022/11/16: 
+Okay, I'm kind of bad at keeping up with this journal. But, I'm making weekly progress report videos for Professor Vogel, so it's 
+just not getting translated here. That said, lots of progress. I have the compass, GPS, and distance sensor implemented. The RVR 
+drives! 
+
+The Arduino Uno has run out of memory, so I got a little stuck. But, I was able to come up with a solution! Using a BeagleBone 
+FTDI Serial Scanner Cable, I am going to watch the Serial while the Uno sends commands to the RVR. That way I can write down the 
+ASCII being sent and received, and I can write my own library! Once I have my own library, I will be able to use whatever Arduino 
+board I like! So, I'm going to go back to the Due, because it's perfect for this project. I picked it because it had plenty of 
+memory, lots of power, it's fast, it's 3.3V, it has 2 Serial ports, and so on. 
+
+I'm excited for the Beaglebone to come in the mail tomorrow. Additionally, I am also purchasing a Black Magic Probe that I plan 
+to use as an Arduino debugger! I need to do some more research into how to use it, but it was highly recommended. 
+
+I already found an error in my code. I forgot to account for the offset in starting heading vs RVR directional heading. So, when
+the RVR starts up, it initializes whatever heading it is at to 0. When you assume North = 0, and your starting heading is not 
+North, that creates a problem. So, I figured out the math and wrote a quick function. The solution is finding the offset, which
+is 360 - current heading. Add that offset to the "normal" value of your cardinal direction, and modulo by 360. 
+
+So, if the current heading is 300, then heading offset = 360 - 300 = 60. To go South, which normally is 180, add 60, which equals
+240. Thus, south now equals 240 instead of 180. But, if the current heading is 22, then the heading offset is 360 - 22 = 338, and 
+to go East, which is normally 90, add 338. East now equals 428. That's over 360, so modulo by 360 or subtract 360 to get 
+428 - 360 = 68. So, East now equals 68 instead of 90. 
+
+Once my cable and black magic probe arrive tomorrow I plan to start working on the library recreation! 
+
+
+
