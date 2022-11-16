@@ -37,6 +37,30 @@ I2CGPS myI2CGPS;                   // Create I2C GPS object
 TinyGPSPlus gps;                   // Create TinyGPS gps object
 SFE_MMC5983MA myMag;               // Create Magnetometer object
 SFEVL53L1X distanceSensor;         // Create distance sensor object
+int loop_count = 0;                // Count how many times loop() has looped
+
+double start[2] = { 33.979140, -84.628120 };       // Starting location
+double coordinates[2] = {0.0, 0.0};                // Current location
+
+double route[5][2] = {                             // Create the route {lat, long} 
+                      { 33.979146, -84.628131 },   // Waypoint[0], My house
+                      { 33.978897, -84.628136 },   // Waypoint[1], second house
+                      { 33.978568, -84.628125 },   // Waypoint[2], third house
+                      { 33.978381, -84.628367 },   // Waypoint[3], fourth house
+                      { 33.978376, -84.628678 }    // Waypoint[4], fifth house
+                    }; 
+
+int currentHeading = 0;
+int distance =       0;
+
+int n =  0;
+int ne = 45;
+int e =  90;
+int se = 135;
+int s =  180;
+int sw = 225;
+int w =  270;
+int nw = 315; 
 
 
 // ----------------------------------- Classes -----------------------------------
@@ -276,54 +300,6 @@ void avoidObstacle()
 
 
 /*
-   FUNCTION: drive()
-   ARGUMENTS: None
-   RETURN: None
-
-   DESCRIPTION:
-   Directs the rover to go a certain direction at a certain speed for a
-   certain amount of time.
-
-   Must provide direction and speed.
-*/
-void drive(int heading)
-{
-  // drive forward at speed 10 for 5 seconds
-  driveControl.rollStart(heading, 10);
-  delay(8 * SECOND);
-  driveControl.rollStop(heading);  // stop driving
-  delay(SECOND);
-}
-
-
-/*
-    FUNCTION: calculateSubroute()
-    ARGUMENTS: None
-    RETURN: None
-    
-    DESCRIPTION:
-    calculateSubroute() calculates a path to the next waypoint if there is one, 
-    if there is not one, it exits
-*/
-void calculateSubroute()
-{
-}
-
-
-/*
-    FUNCTION: navigate()
-    ARGUMENTS: None
-    RETURN: None
-
-    DESCRIPTION:
-    navigate() directs the rover to navigate along the designated sub-route
-*/
-void navigate()
-{
-}
-
-
-/*
     FUNCTION: waypoint_procedure()
     ARGUMENTS: None
     RETURN: None
@@ -365,6 +341,199 @@ void waypointProcedure()
 }
 
 
+/*
+   FUNCTION: drive()
+   ARGUMENTS: None
+   RETURN: None
+
+   DESCRIPTION:
+   Directs the rover to go a certain direction at a certain speed for a
+   certain amount of time.
+
+   Must provide direction and speed.
+*/
+void drive(int heading)
+{
+  // drive forward at speed 40 for 10 seconds
+  driveControl.rollStart(heading, 40);
+  delay(10 * SECOND);
+  driveControl.rollStop(heading);  // stop driving
+  delay(2 * SECOND);
+}
+
+
+/*
+    FUNCTION: subnav()
+    ARGUMENTS: None
+    RETURN: None
+    
+    DESCRIPTION:
+    subnav() calculates a path to the next waypoint if there is one, 
+    if there is not one, it exits
+*/
+void subnav(double destination[])
+{
+  // variables
+  double curr[2]; 
+  
+  getCoordinates(curr);
+
+  while (curr[0] != destination[0] && curr[1] != destination[1])
+  {
+    // current latitude is greater, longitude is greater
+    while (curr[0] > destination[0] && curr[1] > destination[1])
+    {
+      drive(se);
+      getCoordinates(curr);
+    }
+
+    // current latitude is greater, longitude is lesser
+    while (curr[0] > destination[0] && curr[1] < destination[1])
+    {
+      drive(ne);
+      getCoordinates(curr);
+    }
+
+    // current latitude is lesser, longitude is greater
+    while (curr[0] < destination[0] && curr[1] > destination[1])
+    {
+      drive(sw);
+      getCoordinates(curr);
+    }
+
+    // current latitude is lesser, longitude is lesser
+    while (curr[0] < destination[0] && curr[1] < destination[1])
+    {
+      drive(nw);
+      getCoordinates(curr);
+    }
+
+    // current latitude is greater, longitude is correct
+    while (curr[0] > destination[0] && curr[1] == destination[1])
+    {
+      drive(e);
+      getCoordinates(curr);
+    }
+
+    // current latitude is lesser, longitude is correct
+    while (curr[0] < destination[0] && curr[1] == destination[1])
+    {
+      drive(w);
+      getCoordinates(curr);
+    }
+
+    // current latitude is correct, longitude is greater
+    while (curr[0] == destination[0] && curr[1] > destination[1])
+    {
+      drive(s);
+      getCoordinates(curr);
+    }
+
+    // current latitude is correct, longitude is lesser
+    while (curr[0] == destination[0] && curr[1] < destination[1])
+    {
+      drive(n);
+      getCoordinates(curr);
+    }
+  }
+}
+
+
+/*
+    FUNCTION: navigate()
+    ARGUMENTS: None
+    RETURN: None
+
+    DESCRIPTION:
+    navigate() directs the rover to navigate along the coordinates 
+    contained by the route[] array. 
+
+    We start at point start, then navigate to Waypoint[0]. Then we 
+    proceed to navigate from 0 to 1, 1 to 2, 2 to 3, 3 to 4, and then 
+    from 4 back to start. 
+*/
+void navigate()
+{
+  for (int i = 0; i < 5; i++;) 
+  {
+    subnav(route[i]);  // navigate from where we are to this waypoint
+    waypointProcedure();
+  }
+
+  subnav(start); // navigate back to the start
+  waypointProcedure();
+}
+
+
+/*
+    FUNCTION: set_cardinal()
+    ARGUMENTS: int currentHeading
+    RETURN: None
+
+    DESCRIPTION: 
+    Corrects the value of cardinal directions to account for starting
+    heading. 
+
+    To obtain the heading offset, subtract the current heading or starting
+    heading from 360. Then, to obtain the new value for a cardinal direction, 
+    add the offset to it's regular value. If the new value is greater than or
+    equal to 360, subtract 360 to get the adjusted new value. 
+
+    The cardinal directions and their regular numeric value are as follows: 
+    North (n)       0
+    Northeast (ne)  45
+    East (e)        90
+    Southeast (se)  135
+    South (s)       180
+    Southwest (sw)  225
+    West (w)        270
+    Northwest (nw)  315       
+*/
+void set_cardinal()
+{
+  // variables
+  int currentHeading = getHeading();          // starting direction
+  int headingOffset = 360 - currentHeading;   // offset to add to cardinals
+
+  // obtain new cardinal values
+  n  = (n  + headingOffset) % 360; 
+  ne = (ne + headingOffset) % 360;
+  e  = (e  + headingOffset) % 360;
+  se = (se + headingOffset) % 360;
+  s  = (s  + headingOffset) % 360;
+  sw = (sw + headingOffset) % 360;
+  w  = (w  + headingOffset) % 360;
+  nw = (nw + headingOffset) % 360;
+
+}
+
+
+/*
+    FUNCTION: first()
+    ARGUMENTS: None
+    RETURN: None
+
+    DESCRIPTION: 
+    first() sets up local variables for AARVIN to begin navigating
+*/
+void first()
+{
+  // show that all systems are working
+  okayBlink();
+
+  // Set the RVR's internal heading to zero
+  driveControl.setHeading(0);
+
+  // set starting coordinates
+  start[0] = coordinates[0];
+  start[1] = coordinates[1];
+
+  // update the values of the cardinal directions to account for starting heading
+  set_cardinal();
+
+}
+
+
 // ---------------------------------- Main Code ----------------------------------
 
 /*
@@ -378,32 +547,17 @@ void waypointProcedure()
 */
 void loop()
 {
-  // variables
-  int headingOffset = 0;
-  int currentHeading = 0;
-  int distance = 0;
-  double coordinates[] = {0.0, 0.0};
-
-  // show that all systems are working
-  okayBlink();
-
-  // Set the RVR's internal heading to zero
-  driveControl.setHeading(0);
-
-  // get external current heading to init heading_offset
-  headingOffset = getHeading();
-
   // get current gps coordinates
   getCoordinates(coordinates);
 
-  // check distance sensor
-  distance = checkDist();
+  // if this is the first loop, setup for navigation
+  if (loop_count == 0) 
+  {
+    first(); 
 
-  waypointProcedure();
+    // set loop_count to > 0
+    loop_count = 1;
+  }
 
-  drive(0); // drive with heading 0, aka forward
-
-  waypointProcedure();
-
-  // exit(0);  // end loop()
+  navigate();
 }
