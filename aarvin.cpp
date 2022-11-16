@@ -3,7 +3,7 @@
    Autonomous Arduino-based Research Vehicle In Nature (AARVIN)
    Hayley Spencer Leavitt 2022
 
-   Version 1.5
+   Version 2.0
 
    Built for Sphero RVR and Arduino Uno R3 with Arducam Arduino camera module,
    Sparkfun Qwiic GPS, Distance Sensors, Mux Breakout, Qwiic Arduino Shield.
