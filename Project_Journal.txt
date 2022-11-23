@@ -115,4 +115,18 @@ to go East, which is normally 90, add 338. East now equals 428. That's over 360,
 Once my cable and black magic probe arrive tomorrow I plan to start working on the library recreation! 
 
 
+2022/11/22:
+Hey look, I'm back after only a week! 
 
+Anyway, so, I got obstacle avoidance implemented and I bought a camera module from Sparkfun called the "Mini Spy Camera" which is 
+so simple it's basically a blink function. So that camera should work perfectly for my purposes, especially because it has a micro 
+sd card reader already on its chip, so the arduino will never have to handle that info. 
+
+The bad news is that I am out of town for Thanksgiving, so I don't have access to all of my tools, like my soldering iron. So that is 
+going to slow me down a little in terms of fully implementing the Uno as a slave device to control the RVR and having the Due as 
+the main control device. However, I did find a library by rmerriam on BitBucket that he made, reverse engineering Sphero RVR's 
+raspberry pi python library to be usable by Microbits and Arduino. I think I'll play around with that while I'm out of town, since 
+that may completely eliminate my need to solder a logic level converter for the uno to due, since due is 3.3V and uno is 5v. 
+
+I'll try to keep this updated and let you know how that library pans out, and if there are any tweaks I make to it. I'm also going to
+implement the camera, since I can. 
