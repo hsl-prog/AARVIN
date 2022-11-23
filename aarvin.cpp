@@ -3,10 +3,10 @@
    Autonomous Arduino-based Research Vehicle In Nature (AARVIN)
    Hayley Spencer Leavitt 2022
 
-   Version 2.0
+   Version 2.2
 
-   Built for Sphero RVR and Arduino Uno R3 with Arducam Arduino camera module,
-   Sparkfun Qwiic GPS, Distance Sensors, Mux Breakout, Qwiic Arduino Shield.
+   Built for Sphero RVR, Arduino Due, and Arduino Uno with Arducam Arduino camera 
+   module, Sparkfun Qwiic GPS, Mini Magnetometer, and Distance Sensor. 
 
    https://www.arduino.cc/reference/en/
    https://github.com/sphero-inc/sphero-sdk-arduino-cpp
@@ -17,7 +17,6 @@
 // --------------------------------- Libriaries ----------------------------------
 
 #include <Wire.h>                                // I2C/TWI Lib
-#include <SpheroRVR.h>                           // Library for the Sphero RVR
 #include <SparkFun_I2C_GPS_Arduino_Library.h>    // GPS XA1110 Lib
 #include <TinyGPS++.h>                           // TinyGPS Lib
 #include <SparkFun_VL53L1X.h>                    // Distance Sensor Lib
@@ -32,11 +31,11 @@
 
 // ------------------------------ Global Variables -------------------------------
 
-static DriveControl driveControl;  // Drive control for the RVR
 I2CGPS myI2CGPS;                   // Create I2C GPS object
 TinyGPSPlus gps;                   // Create TinyGPS gps object
 SFE_MMC5983MA myMag;               // Create Magnetometer object
 SFEVL53L1X distanceSensor;         // Create distance sensor object
+int drive_device_addr = 9;         // What address is the drive device on
 int loop_count = 0;                // Count how many times loop() has looped
 
 double start[2] = { 33.979140, -84.628120 };       // Starting location
@@ -63,84 +62,6 @@ int w =  270;
 int nw = 315; 
 
 
-// ----------------------------------- Classes -----------------------------------
-
-
-
-// ------------------------------------ Setup ------------------------------------
-
-/*
-    FUNCTION: void setup()
-    ARGUMENTS: None
-    RETURNS: None
-
-    DESCRIPTION:
-    The setup function runs once when you start the board. It initializes all
-    sensors and prepares for the loop() function to run. Among the initialization
-    processes, setup() intializes communication between the Arduino Uno and the
-    Sphero RVR, intializes the GPS, the distance sensors, and the magnetometer.
-
-    The Arduino Uno communicates with the RVR via a USB-A to USB-B cable
-    with Serial communications. Sphero's RVR Library is proprietary, and has
-    4 different methods of controling the drive function of the RVR, along
-    with functions to control the LEDs on the RVR, to check on the battery
-    state, and sleep monitoring.
-
-    The GPS module is the XA1110 Qwiic GPS+GLONASS module from Sparkfun.
-    It is accurate to about a 5 foot radius.
-    The default I2C address is 0x10.
-
-    The Compass module is the MMC5983MA Qwiic Micro Magnetometer, also from
-    Sparkfun. It is a 3-axis magentic sensor with on-chip signal processing.
-    It communicates via I2C communication, and has an accuracy of half a degree.
-    The default I2C address is 0x30.
-
-    The distance sensor is a VL53L1X Qwiic I2C distance sensor module from 
-    Sparkfun. It functions using an infrared laser time-of-flight system.
-    The accuracy of the sensor is around 5mm, with a minimum read distance
-    of 1cm. The max read distance varies depending on the object being
-    detected. The default address for the distance sensor is 0x29.
-*/
-void setup()
-{
-  // Initialize built-in LED on the Arduino for output
-  pinMode(LED_BUILTIN, OUTPUT);
-
-  // Initialize communications with the RVR
-  rvr.configUART(&Serial);               // configure UART
-  delay(2 * SECOND);                     // wait for the RVR to "wake up"
-  driveControl = rvr.getDriveControl();  // get RVR's DriveControl
-
-  Wire.begin();            // start I2C for the distance sensors
-  Serial.begin(115200);    // start Serial at speed 115200 baud
-
-  //Initialize I2C GPS XA1110 module
-  while (myI2CGPS.begin() == false)
-  {
-    Serial.println("GPS failed to respond"); 
-    delay(500);
-  }
-  Serial.println("GPS module found!");
-
-  //Initialize MMC5983MA Micro Magnetometer sensor
-  while (myMag.begin() == false)
-  {
-    Serial.println("Magnetometer did not respond");
-    delay(500);
-  }
-  Serial.println("Magnetometer found!");
-  myMag.softReset();  // reset magnetometer for accuracy
-
-  // Initialize distance sensor
-  while (distanceSensor.begin() != 0)
-  {
-    Serial.println("Distance sensor did not respond");
-    delay(500);       
-  }
-  Serial.println("Distance sensor found!");
-}
-
-
 // ---------------------------------- Functions ----------------------------------
 
 /*
@@ -154,6 +75,7 @@ void setup()
    On the UNO the built-in LED is attached to digital pin 13.
    LED_BUILTIN is set to the correct LED pin independent of which board is used.
 
+   SOURCES:
    https://www.arduino.cc/en/Tutorial/BuiltInExamples/Blink
 */
 void okayBlink()
@@ -169,6 +91,33 @@ void okayBlink()
 
 
 /*
+   FUNCTION: sendWire()
+   ARGUMENTS: int wHeading, int wSpeed, int wTime
+   RETURNS: None
+   
+   DESCRIPTION: 
+   sendWire() sends an array of wHeading, wSpeed, and wTime to the drive device. 
+   Arduino needs to multiply an integer by 1000 to get the amount of time in 
+   seconds, so the slave device will receive wTime as "how many seconds" and will
+   multiply wTime by 1000 when using it. 
+   
+   SOURCES: 
+   https://www.instructables.com/I2C-between-Arduinos/
+   GolamMostafa on Arduino forum: 
+   https://forum.arduino.cc/t/solved-sending-array-data-with-i2c/537012/2
+ */
+ void sendWire(int wHeading, int wSpeed, int wTime)
+ {
+    Wire.beginTransmission(drive_device_addr); // transmit to drive device
+    Wire.write(wHeading);                      // transmit heading info
+    Wire.write(wSpeed);                        // transmit speed info
+    Wire.write(wTime);                         // transmit time info
+    Wire.endTransmission();                    // stop transmitting
+    delay(wTime + (5 * SECOND));               // wait for the RVR to drive
+ }
+
+
+/*
    FUNCTION: getHeading();
    ARGUMENTS: None
    RETURNS: double - heading
@@ -176,6 +125,9 @@ void okayBlink()
    DESCRIPTION:
    get_Heading() reads from the Mini Magnetometer to get the direction the RVR is
    currently facing
+
+   SOURCES: 
+   Magnetometer Example Code
 */
 int getHeading()
 {
@@ -218,15 +170,18 @@ int getHeading()
 
 
 /*
- * FUNCTION: getCoordinates()
- * ARGUMENTS: double coordinates[] 
- *    coordinates[0] is latitutde, coordinates[1] is longitute
- * RETURNS: None
- * 
- * DESCRIPTION: 
- * getCoordinates() checks the gps and retrieves latitude and longitute in the 
- * given argument array coordinates[], the first element of coordinates is the 
- * latitude, and the second element is the longitude
+   FUNCTION: getCoordinates()
+   ARGUMENTS: double coordinates[] 
+      coordinates[0] is latitutde, coordinates[1] is longitute
+   RETURNS: None
+   
+   DESCRIPTION: 
+   getCoordinates() checks the gps and retrieves latitude and longitute in the 
+   given argument array coordinates[], the first element of coordinates is the 
+   latitude, and the second element is the longitude
+   
+   SOURCES: 
+   GPS example code
  */
  void getCoordinates(double coordinates[]) 
  {
@@ -254,7 +209,11 @@ int getHeading()
   RETURNS: int - 0 on all clear, 1 on blockage
 
   DESCRIPTION:
-  avoid_obstacle() keeps the RVR from running into things
+  checkDist() checks to see how far away any obstacles are. Returns 0 if path is 
+  clear, and 1 if the path is blocked. 
+  
+  SOURCES: 
+  Distance Sensor example code
 */
 int checkDist()
 {
@@ -292,10 +251,19 @@ int checkDist()
   RETURNS: None
 
   DESCRIPTION:
-  avoid_obstacle() keeps the RVR from running into things
+  avoid_obstacle() keeps the RVR from running into things if we are blocked
 */
 void avoidObstacle()
 {
+  int currH = getHeading(); 
+
+  sendWire(currH + 30, 10, 0.5);
+
+  if(checkDist() == 0)
+  {
+    // drive in the unblocked direction
+    sendWire(currH + 30, 50, 5); 
+  }
 }
 
 
@@ -311,54 +279,22 @@ void avoidObstacle()
 */
 void waypointProcedure()
 {
-  // turn to the right 90 degrees
-  driveControl.rollStart(90, 10);
-  delay(3 * SECOND);
-  driveControl.rollStop(90);       // stop driving
-  delay(3 * SECOND);
+  int currH = getHeading();
+  
+  // turn East
+  sendWire(e, 10, 3);
 
-  // turn to the back, another 90 degrees
-  driveControl.rollStart(180, 10);
-  delay(3 * SECOND);
-  driveControl.rollStop(180);      // stop driving
-  delay(3 * SECOND);
+  // turn South
+  sendWire(s, 10, 3);
 
-  // turn to the left, another 90 degrees
-  driveControl.rollStart(270, 10);
-  delay(3 * SECOND);
-  driveControl.rollStop(270);      // stop driving
-  delay(3 * SECOND);
+  // turn West
+  sendWire(w, 10, 3);
 
-  // turn back to "front", another 90 degrees
-  driveControl.rollStart(359, 10);
-  delay(3 * SECOND);
-  driveControl.rollStop(359);      // stop driving
-  delay(3 * SECOND);
+  // turn North
+  sendWire(n, 10, 3);
 
-  // Actually turn back to the front, because 360 is out of range
-  driveControl.rollStart(0, 10);
-  driveControl.rollStop(0);
-}
-
-
-/*
-   FUNCTION: drive()
-   ARGUMENTS: None
-   RETURN: None
-
-   DESCRIPTION:
-   Directs the rover to go a certain direction at a certain speed for a
-   certain amount of time.
-
-   Must provide direction and speed.
-*/
-void drive(int heading)
-{
-  // drive forward at speed 40 for 10 seconds
-  driveControl.rollStart(heading, 40);
-  delay(10 * SECOND);
-  driveControl.rollStop(heading);  // stop driving
-  delay(2 * SECOND);
+  // Turn back to the way we were facing
+  sendWire(currH, 10, 1);
 }
 
 
@@ -383,57 +319,97 @@ void subnav(double destination[])
     // current latitude is greater, longitude is greater
     while (curr[0] > destination[0] && curr[1] > destination[1])
     {
-      drive(se);
+      sendWire(se, 40, 10);
       getCoordinates(curr);
+      
+      while(checkDist() == 1)
+      {
+        avoidObstacle();
+      }
     }
 
     // current latitude is greater, longitude is lesser
     while (curr[0] > destination[0] && curr[1] < destination[1])
     {
-      drive(ne);
+      sendWire(ne, 40, 10);
       getCoordinates(curr);
+
+      while(checkDist() == 1)
+      {
+        avoidObstacle();
+      }
     }
 
     // current latitude is lesser, longitude is greater
     while (curr[0] < destination[0] && curr[1] > destination[1])
     {
-      drive(sw);
+      sendWire(sw, 40, 10);
       getCoordinates(curr);
+
+      while(checkDist() == 1)
+      {
+        avoidObstacle();
+      }
     }
 
     // current latitude is lesser, longitude is lesser
     while (curr[0] < destination[0] && curr[1] < destination[1])
     {
-      drive(nw);
+      sendWire(nw, 40, 10);
       getCoordinates(curr);
+
+      while(checkDist() == 1)
+      {
+        avoidObstacle();
+      }
     }
 
     // current latitude is greater, longitude is correct
     while (curr[0] > destination[0] && curr[1] == destination[1])
     {
-      drive(e);
+      sendWire(e, 40, 10);
       getCoordinates(curr);
+
+      while(checkDist() == 1)
+      {
+        avoidObstacle();
+      }
     }
 
     // current latitude is lesser, longitude is correct
     while (curr[0] < destination[0] && curr[1] == destination[1])
     {
-      drive(w);
+      sendWire(w, 40, 10);
       getCoordinates(curr);
+
+      while(checkDist() == 1)
+      {
+        avoidObstacle();
+      }
     }
 
     // current latitude is correct, longitude is greater
     while (curr[0] == destination[0] && curr[1] > destination[1])
     {
-      drive(s);
+      sendWire(s, 40, 10);
       getCoordinates(curr);
+
+      while(checkDist() == 1)
+      {
+        avoidObstacle();
+      }
     }
 
     // current latitude is correct, longitude is lesser
     while (curr[0] == destination[0] && curr[1] < destination[1])
     {
-      drive(n);
+      sendWire(n, 40, 10);
       getCoordinates(curr);
+
+      while(checkDist() == 1)
+      {
+        avoidObstacle();
+      }
     }
   }
 }
@@ -454,7 +430,7 @@ void subnav(double destination[])
 */
 void navigate()
 {
-  for (int i = 0; i < 5; i++;) 
+  for (int i = 0; i < 5; i++) 
   {
     subnav(route[i]);  // navigate from where we are to this waypoint
     waypointProcedure();
@@ -508,21 +484,75 @@ void set_cardinal()
 }
 
 
+// ------------------------------------ Setup ------------------------------------
+
 /*
-    FUNCTION: first()
+    FUNCTION: void setup()
     ARGUMENTS: None
-    RETURN: None
+    RETURNS: None
 
-    DESCRIPTION: 
-    first() sets up local variables for AARVIN to begin navigating
+    DESCRIPTION:
+    The setup function runs once when you start the board. It initializes all
+    sensors and prepares for the loop() function to run. Among the initialization
+    processes, setup() intializes communication between the Arduino Uno and the
+    Sphero RVR, intializes the GPS, the distance sensors, and the magnetometer.
+
+    The Arduino Uno communicates with the RVR via a USB-A to USB-B cable
+    with Serial communications. Sphero's RVR Library is proprietary, and has
+    4 different methods of controling the drive function of the RVR, along
+    with functions to control the LEDs on the RVR, to check on the battery
+    state, and sleep monitoring.
+
+    The GPS module is the XA1110 Qwiic GPS+GLONASS module from Sparkfun.
+    It is accurate to about a 5 foot radius.
+    The default I2C address is 0x10.
+
+    The Compass module is the MMC5983MA Qwiic Micro Magnetometer, also from
+    Sparkfun. It is a 3-axis magentic sensor with on-chip signal processing.
+    It communicates via I2C communication, and has an accuracy of half a degree.
+    The default I2C address is 0x30.
+
+    The distance sensor is a VL53L1X Qwiic I2C distance sensor module from 
+    Sparkfun. It functions using an infrared laser time-of-flight system.
+    The accuracy of the sensor is around 5mm, with a minimum read distance
+    of 1cm. The max read distance varies depending on the object being
+    detected. The default address for the distance sensor is 0x29.
 */
-void first()
+void setup()
 {
-  // show that all systems are working
-  okayBlink();
+  // Initialize built-in LED on the Arduino for output
+  pinMode(LED_BUILTIN, OUTPUT);
 
-  // Set the RVR's internal heading to zero
-  driveControl.setHeading(0);
+  Wire.begin();            // start I2C for the distance sensors
+  Serial.begin(115200);    // start Serial at speed 115200 baud
+
+  //Initialize I2C GPS XA1110 module
+  while (myI2CGPS.begin() == false)
+  {
+    Serial.println("GPS failed to respond"); 
+    delay(500);
+  }
+  Serial.println("GPS module found!");
+
+  //Initialize MMC5983MA Micro Magnetometer sensor
+  while (myMag.begin() == false)
+  {
+    Serial.println("Magnetometer did not respond");
+    delay(500);
+  }
+  Serial.println("Magnetometer found!");
+  myMag.softReset();  // reset magnetometer for accuracy
+
+  // Initialize distance sensor
+  while (distanceSensor.begin() != 0)
+  {
+    Serial.println("Distance sensor did not respond");
+    delay(500);       
+  }
+  Serial.println("Distance sensor found!");
+
+  // run blink to show that systems are working
+  okayBlink();
 
   // set starting coordinates
   start[0] = coordinates[0];
@@ -530,7 +560,6 @@ void first()
 
   // update the values of the cardinal directions to account for starting heading
   set_cardinal();
-
 }
 
 
@@ -549,15 +578,6 @@ void loop()
 {
   // get current gps coordinates
   getCoordinates(coordinates);
-
-  // if this is the first loop, setup for navigation
-  if (loop_count == 0) 
-  {
-    first(); 
-
-    // set loop_count to > 0
-    loop_count = 1;
-  }
 
   navigate();
 }
