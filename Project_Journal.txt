@@ -3,8 +3,6 @@ AUTONOMOUS ARDUINO-DRIVEN RESEARCH VEHICLE IN NATURE (AARVIN)
 AUTHOR: HAYLEY SPENCER LEAVITT 
 
 GITHUB: https://github.com/hsl-prog/AARVIN
-JIRA: https://hayleyleavitt.atlassian.net/jira/software/projects/AARVIN/boards
-
 
 2022/06/07 :  
 AARVIN is a personal project I began concepting in the summer of 2021. My primary goal with AARVIN is to learn. I am 
