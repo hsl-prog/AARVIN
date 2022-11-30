@@ -83,11 +83,38 @@ void okayBlink()
   for (uint8_t i = 0; i < 10; i++)
   {
     digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH v)
-    delay(0.5 * SECOND);                       // wait for 1/2 of a second
+    delay(0.5 * SECOND);              // wait for 1/2 of a second
     digitalWrite(LED_BUILTIN, LOW);   // turn the LED off (LOW v)
-    delay(0.5 * SECOND);                       // wait for 1/2 of a second
+    delay(0.5 * SECOND);              // wait for 1/2 of a second
   }
 }
+
+
+/*
+ * FUNCTION: takePicture()
+ * ARGUMENTS: None
+ * RETURNS: None
+ * 
+ * DESCRIPTION: 
+ * takePicture() runs the Adafruit Mini Keychain Spy Camera to take a single photo. 
+ * 
+ * The spy camera is capable of taking up to 1000 pictures, labeled PIC000 through PIC999.
+ * It has a built-in SD card system that is encapsulated, so the Arduino never handles the 
+ * photo information. The spy camera can also take video, limited by your SD card size. 
+ * The camer is compatible with up to 32gb microSD cards. 
+ * 
+ * The spy camera has 3 cords: power, ground, and control. The control wire is the white 
+ * wire. To take a photo, pulse power on the control wire for ~100ms, then stop the pulse. 
+ * To take a video, pulse power for over 100ms, wait to allow the camera to film your video, 
+ * then pulse power again for 500ms to stop the video. 
+ */
+ void takePicture()
+ {
+   // Take a picture with t
+   analogWrite(2, 255);   // 2 is the PWM pin number the camera is on, 255 is the power value
+   delay(99);             // power for 99ms 
+   analogWrite(2, 0);     // turn the power off to take the photo
+ }
 
 
 /*
@@ -283,15 +310,19 @@ void waypointProcedure()
   
   // turn East
   sendWire(e, 10, 3);
+  takePicture();
 
   // turn South
   sendWire(s, 10, 3);
+  takePicture();
 
   // turn West
   sendWire(w, 10, 3);
+  takePicture();
 
   // turn North
   sendWire(n, 10, 3);
+  takePicture();
 
   // Turn back to the way we were facing
   sendWire(currH, 10, 1);
