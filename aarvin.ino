@@ -442,7 +442,7 @@ void navigate()
   for (int i = 0; i < ROUTELEN; i++)
   {
     // get our current coordinates
-    getCurrentCoordinates();   
+    getCurrentCoordinates();
 
     // calculate the heading at which we need to drive to reach our destination
     headingToDrive = calculateHeading(myWaypoints[i]);
@@ -459,8 +459,8 @@ void navigate()
            (currentPoint.wlong < (myWaypoints[i].wlong - COORDOFFSET)) ||
            (currentPoint.wlong > (myWaypoints[i].wlong + COORDOFFSET)))
     {
-      // if we are not blocked, then drive 
-      if(currentDistance > OBSDISTANCE)
+      // if we are not blocked, then drive
+      if (currentDistance > OBSDISTANCE)
       {
         // drive at our heading
         drive(headingToDrive, DRIVESPEED, DRIVETIME);
