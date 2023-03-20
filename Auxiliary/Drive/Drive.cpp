@@ -51,14 +51,16 @@
 
 
 // ------------------------------------ Macros ------------------------------------
-
 #define LEFT_MOTOR 0
 #define RIGHT_MOTOR 1
 
+#define DRIVESPEED 100
+#define DRIVETIME 2000
+#define TURNSPEED 115
+#define TURNTIME 1000
+
 
 // ---------------------------------- Objects ------------------------------------
-
-SCMD myMotorDriver; 
 
 
 // ------------------------------ Class Definition -------------------------------
@@ -74,6 +76,7 @@ SCMD myMotorDriver;
 */
 Tank::Tank()
 {
+  SCMD myMotorDriver; 
 }
 
 
@@ -87,23 +90,49 @@ Tank::Tank()
  */
 void Tank::tankprep()
 {
-  // configure I2C mode
-  myMotorDriver.settings.commInterface = I2C_MODE; 
+  pinMode(8, INPUT_PULLUP); //Use to halt motor movement (ground)
 
-  // set the I2C Address 
+  Serial.begin(9600);
+  Wire.begin();
+  Serial.println("Starting sketch.");
+
+  //***** Configure the Motor Driver's Settings *****//
+  //  .commInter face is I2C_MODE 
+  myMotorDriver.settings.commInterface = I2C_MODE;
+
+  //  set address if I2C configuration selected with the config jumpers, 1000
   myMotorDriver.settings.I2CAddress = 0x5D; 
 
-  // chip select for SPI
-  myMotorDriver.settings.chipSelectPin = 10; 
+  //  set chip select if SPI selected with the config jumpers
+  myMotorDriver.settings.chipSelectPin = 10;
 
-  while(myMotorDriver.begin() != 0xA9) 
+  //*****initialize the driver get wait for idle*****//
+  while ( myMotorDriver.begin() != 0xA9 ) //Wait until a valid ID word is returned
   {
-    Serial.println("Waiting for ID match"); 
+    Serial.println(myMotorDriver.begin());
+    Serial.println( "ID mismatch, trying again" );
     delay(500);
   }
+  Serial.println( "ID matches 0xA9" );
+
+  //  Check to make sure the driver is done looking for slaves before beginning
+  Serial.print("Waiting for enumeration...");
+  while ( myMotorDriver.ready() == false );
+  Serial.println("Done.");
+  Serial.println();
+
+  //*****Set application settings and enable driver*****//
+
+  //Uncomment code for motor 0 inversion
+  //while( myMotorDriver.busy() );
+  //myMotorDriver.inversionMode(0, 1); //invert motor 0
+
+  //Uncomment code for motor 1 inversion
+  while ( myMotorDriver.busy() ); //Waits until the SCMD is available.
+  myMotorDriver.inversionMode(1, 1); //invert motor 1
   
-  while(myMotorDriver.ready() == false); 
-  Serial.println("Ready!"); 
+  while ( myMotorDriver.busy() );
+  myMotorDriver.enable(); //Enables the output driver hardware
 }
 
 
@@ -112,17 +141,20 @@ void Tank::tankprep()
    FUNCTION: brake()
    ARGUMENTS: None
    RETURN: None
+
+   DESCRIPTION: 
+   brake() sends a signal to stop to each motor, cause the robot to stop moving
 */
 void Tank::brake()
 {
-  myMotorDriver.setDrive(LEFT_MOTOR, 0, 0); 
+  myMotorDriver.setDrive(LEFT_MOTOR, 0, 0);
   myMotorDriver.setDrive(RIGHT_MOTOR, 0, 0);
+  delay(5);
 }
-void Tank::brake(int duration)
+void Tank::tbrake(int duration)
 {
-  myMotorDriver.setDrive(LEFT_MOTOR, 0, 0); 
-  myMotorDriver.setDrive(RIGHT_MOTOR, 0, 0); 
-
+  myMotorDriver.setDrive(LEFT_MOTOR, 0, 0);
+  myMotorDriver.setDrive(RIGHT_MOTOR, 0, 0);
   delay(duration);
 }
 
@@ -140,16 +172,15 @@ void Tank::brake(int duration)
 */
 void Tank::forward(int fspeed)
 {
-  Serial.println("Driving forward"); 
-  
   myMotorDriver.setDrive(LEFT_MOTOR, 0, fspeed);
-  myMotorDriver.setDrive(RIGHT_MOTOR, 0, fspeed); 
+  myMotorDriver.setDrive(RIGHT_MOTOR, 0, fspeed);
   delay(5);
 }
-void Tank::forward(int fspeed, int duration)
+void Tank::tforward(int fspeed, int duration)
 {
   // drive forward at speed for specified duration
-  forward(fspeed);
+  myMotorDriver.setDrive(LEFT_MOTOR, 0, fspeed);
+  myMotorDriver.setDrive(RIGHT_MOTOR, 0, fspeed);
   delay(duration);
 
   // brake
@@ -170,14 +201,15 @@ void Tank::forward(int fspeed, int duration)
 */
 void Tank::reverse(int rspeed)
 {
-  myMotorDriver.setDrive(LEFT_MOTOR, 1, rspeed); 
+  myMotorDriver.setDrive(LEFT_MOTOR, 1, rspeed);
   myMotorDriver.setDrive(RIGHT_MOTOR, 1, rspeed); 
   delay(5);
 }
-void Tank::reverse(int rspeed, int duration)
+void Tank::treverse(int rspeed, int duration)
 {
   // drive forward at speed for specified duration
-  reverse(rspeed);
+  myMotorDriver.setDrive(LEFT_MOTOR, 1, rspeed);
+  myMotorDriver.setDrive(RIGHT_MOTOR, 1, rspeed);
   delay(duration);
 
   // brake
@@ -198,14 +230,15 @@ void Tank::reverse(int rspeed, int duration)
 */
 void Tank::turn_right(int tspeed)
 {
-  myMotorDriver.setDrive(RIGHT_MOTOR, 1, tspeed); 
-  myMotorDriver.setDrive(LEFT_MOTOR, 0, tspeed); 
+  myMotorDriver.setDrive(LEFT_MOTOR, 1, tspeed);
+  myMotorDriver.setDrive(RIGHT_MOTOR, 0, tspeed);
   delay(5);
 }
-void Tank::turn_right(int tspeed, int duration)
+void Tank::tturn_right(int tspeed, int duration)
 {
   // drive forward at speed for specified duration
-  turn_right(tspeed);
+  myMotorDriver.setDrive(LEFT_MOTOR, 1, tspeed);
+  myMotorDriver.setDrive(RIGHT_MOTOR, 0, tspeed);
   delay(duration);
 
   // brake
@@ -224,18 +257,63 @@ void Tank::turn_right(int tspeed, int duration)
    DESCRIPTION:
    Turns the tank in place leftwards, or counter-clockwise, using 0 to 255 speed, modulated by the Offset variable
 */
-void Tank::turn_left(int tspeed)
+void Tank::turn_left(int lspeed)
 {
-  myMotorDriver.setDrive(RIGHT_MOTOR, 0, tspeed); 
-  myMotorDriver.setDrive(LEFT_MOTOR, 1, tspeed); 
+  myMotorDriver.setDrive(LEFT_MOTOR, 0, lspeed);
+  myMotorDriver.setDrive(RIGHT_MOTOR, 1, lspeed);
   delay(5);
 }
-void Tank::turn_left(int tspeed, int duration)
+void Tank::tturn_left(int lspeed, int duration)
 {
   // drive forward at speed for specified duration
-  turn_right(tspeed);
+  myMotorDriver.setDrive(LEFT_MOTOR, 0, lspeed);
+  myMotorDriver.setDrive(RIGHT_MOTOR, 1, lspeed);
   delay(duration);
 
   // brake
   brake();
 }
+
+
+/*
+ * CLASS: Tank
+ * FUNCTION: square_dance()
+ * ARGUMENTS: 
+ * RETURN: None
+ * 
+ * DESCRIPTION: 
+ * Square dance makes the robot go in a little dance 
+ */
+ void Tank::square_dance()
+ {
+   for (int i = 0; i < 4; i++)
+   {
+     Serial.print("Dancing to the right");
+     Serial.println(i); 
+     forward(DRIVESPEED);
+     delay(DRIVETIME);
+     brake();
+     delay(5);
+     
+     turn_right(TURNSPEED);
+     delay(TURNTIME);
+
+     brake();
+     delay(5);
+   }
+   for (int i = 0; i < 4; i++)
+   {
+     Serial.print("Dancing to the left");
+     Serial.println(i); 
+     turn_left(TURNSPEED);
+     delay(TURNTIME);
+
+     brake();
+     delay(5);
+    
+     reverse(DRIVESPEED);
+     delay(DRIVETIME);
+
+     brake(); 
+   }
+ }
