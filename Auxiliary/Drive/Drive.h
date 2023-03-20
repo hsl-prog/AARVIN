@@ -43,26 +43,27 @@ class Tank
     // the class
     Tank();
 
+    SCMD myMotorDriver;
+
     // the functions
     void tankprep(); 
     
     void brake();
-    void brake(int duration);
+    void tbrake(int duration);
      
     void forward(int fspeed); 
-    void forward(int fspeed, int duration); 
+    void tforward(int fspeed, int duration); 
     
     void reverse(int rspeed); 
-    void reverse(int rspeed, int duration);
+    void treverse(int rspeed, int duration);
     
     void turn_right(int tspeed); 
-    void turn_right(int tspeed, int duration);
+    void tturn_right(int tspeed, int duration);
     
     void turn_left(int tspeed); 
-    void turn_left(int tspeed, int duration);
+    void tturn_left(int tspeed, int duration);
 
-  private: 
-
+    void square_dance();
 };
 
 #endif 
