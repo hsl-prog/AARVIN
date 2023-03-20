@@ -9,62 +9,45 @@
        https://www.sparkfun.com/products/15451 
 */
 
-// ----------------------------------- Libraries -----------------------------------
-
-#include <Wire.h>
+// ----------------------------------- Libraries ----------------------------------
 #include <Arduino.h>
-#include <stdint.h> 
+#include "Wire.h"
+#include <stdint.h>
 #include "SCMD.h"
-#include "SCMD_config.h"
+#include "SCMD_config.h" //Contains #defines for common SCMD register names and values
 #include "Drive.h"
 
 
 // ------------------------------------ Macros ------------------------------------
+#define LEFT_MOTOR 0
+#define RIGHT_MOTOR 1
 
 #define DRIVESPEED 100
-#define DRIVETIME 15
-#define TURNSPEED 200
-#define TURNTIME 5
+#define DRIVETIME 2000
+#define TURNSPEED 115
+#define TURNTIME 1000
 
 
-// ----------------------------------- Objects -----------------------------------
+// ------------------------------------ Objects -----------------------------------
+SCMD myMotorDriver; 
+Tank myTank;
 
-Tank myTank; 
 
+// ----------------------------------- Functions ----------------------------------
+//  Pin 8 can be grounded to disable motor movement, for debugging.
 
-// ---------------------------------- Functions ----------------------------------
-
-void setup() 
-{
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-  Wire.begin();
-  Serial.println("Starting Drive Code."); 
-  
+void setup()
+{ 
   myTank.tankprep();
-
 }
 
 
-void square_dance()
+void loop()
 {
-  for (int i = 0; i < 5; i ++)
-  {
-    myTank.forward(DRIVESPEED, DRIVETIME);
-    myTank.turn_right(TURNSPEED, TURNTIME);
-  }
+  //pass setDrive() a motor number, direction as 0(call 0 forward) or 1, and level from 0 to 255
+  myTank.brake();
+  delay(5);
+  while (digitalRead(8) == 0); //Hold if jumper is placed between pin 8 and ground
 
-  for (int i = 0; i < 5; i++)
-  {
-    myTank.turn_left(TURNSPEED, TURNTIME); 
-    myTank.reverse(DRIVESPEED, DRIVETIME); 
-  }
-  
-}
-
-
-void loop() 
-{
-  // put your main code here, to run repeatedly:
-
+  myTank.square_dance();  
 }
